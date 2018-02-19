@@ -2,6 +2,10 @@
 'a test module'
 __author__ = 'Michael Liao'
 import sys
+
+class Hello(object):
+	def hello(self, name='world'):
+		print('Hello, %s.' % name)
 def test():
     args = sys.argv
     if len(args)==1:
