@@ -11,14 +11,6 @@ class Dict(dict):
 	>>> d2 = Dict(a=1, b=2, c='3')
 	>>> d2.c
 	'3'
-	>>> d2['empty']
-	Traceback (most recent call last)
-	...
-	KeyError: 'empty'
-	>>> d2.empty
-	Traceback (most recent call last):
-	...
-	AttributeError: 'Dict' object has no attribute 'empty'
 	'''
 	def __init__(self, **kw):
 		#super().__init__(**kw)
