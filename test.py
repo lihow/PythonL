@@ -1,38 +1,28 @@
-#编写一个程序，能在当前目录以及当前目录的所有子目录下查找文件名包含指定字符串的文件，并打印出相对路径
-import os
-def Print_File(files):
-    print(x for x in files)
-def Find_File(files, name):
-    return [x for x in files if x.find(name) != -1]
-def Find_folder(folder,name):
-    #os.chdir(folder)
-    dirnames = [x for x in os.listdir('.') if os.path.isdir(x)]
-    #Print_File(dirnames)
-    filenames = [x for x in os.listdir('.') if os.path.isfile(x)]
-    #result_file = []
-    if len(filenames):#
-        result_file = [x for x in filenames if x.find(name) != -1]
-    #Print_File(result_file)
-    result_folder = []
-    if len(dirnames):#
-        for dirname in dirnames:
-            result_tmp = Find_folder(dirname, name)
-            result_folder.extend(result_tmp)
-        #Print_File(result_folder)
-    result_file = result_file.extend(result_folder)
-    result = []
-    for r in result_file:
-        result.append(os.path.join(folder, r))
-    #os.chdir('..')
-    return result
+from multiprocessing import Process, Queue
+import os, time, random
+
+#写数据进程执行的代码:
+def write(q):
+    print('Process to write: %s' % os.getpid())
+    for value in ['A', 'B', 'C']:
+        print('Put %s to queue...' % value)
+        q.put(value)
+        time.sleep(random.random())
         
+#读数据进程执行的代码:
+def read(q):
+    print('Process to read : %s' % os.getpid())
+    while True:
+        value = q.get(True)
+        print('Get %s from queue.' % value)
 
-dirnames = [x for x in os.listdir('.') if os.path.isdir(x)]
-filenames = [x for x in os.listdir('.') if os.path.isfile(x)]
-for dirname in dirnames:
-    print('enter folder: ' + dirname)
-
-for x in Find_File(filenames, 'my'):
-    print(x)
-
-#Find_folder('.', 'my')
+if __name__=='__main__':
+    q = Queue()
+    pw = Process(target=write, args=(q,))
+    pr = Process(target=read, args=(q,))
+    pw.start()
+    pr.start()
+    #等待pw结束
+    pw.join()
+    #pr进程里是死循环，无法等待其结束，只能强行终止
+    pr.terminate()
