@@ -76,8 +76,8 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    out1 = np.maximum(0, X.dot(W1) + b1) # relu, (N, H)
-    scores = out1.dot(W2) + b2 # (N, C)
+    hidden_layer = np.maximum(0, np.dot(X,W1)+b1) # ReLU activation
+    scores = np.dot(hidden_layer, W2)+b2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -94,11 +94,12 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    correct_class_score = scores[np.arange(N), y].reshape(N, 1)
-    exp_sum = np.sum(np.exp(scores), axis = 1).reshape(N, 1)
-    loss = np.sum(np.log(exp_sum) - correct_class_score)
-    loss /= N
-    loss += 0.5 * reg * np.sum(W1 * W1) + 0.5 * reg * np.sum(W2 * W2)
+    exp_scores = np.exp(scores-np.max(scores, axis=1, keepdims=True))
+    probs = exp_scores/np.sum(exp_scores, axis=1, keepdims=True) #[N X C]
+    correct_logprobs = -np.log(probs[range(N),y])
+    data_loss = np.sum(correct_logprobs)/N
+    reg_loss = 0.5 * reg * ( np.sum(W1*W1) + np.sum(W2*W2) )
+    loss = data_loss + reg_loss
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -110,7 +111,35 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    # compute the gradient on scores
+
+    dscores = probs
+    dscores[range(N),y] -= 1
+    dscores /= N
+
+    # backpropate the gradient to the parameters
+    # first backprop into parameters W2 and b2
+    dW2 = np.dot(hidden_layer.T, dscores)
+    db2 = np.sum(dscores, axis=0, keepdims=False)
+
+    # next backprop into hidden layer
+    dhidden = np.dot(dscores, W2.T)
+
+    # backprop the ReLU non-linearity
+    dhidden[hidden_layer <= 0] = 0
+
+    # finally into W,b
+    dW1 = np.dot(X.T, dhidden)
+    db1 = np.sum(dhidden, axis=0, keepdims=False)
+
+    # add regularization gradient contribution
+    dW2 += reg * W2
+    dW1 += reg * W1
+
+    grads['W1'] = dW1
+    grads['W2'] = dW2
+    grads['b1'] = db1
+    grads['b2'] = db2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
